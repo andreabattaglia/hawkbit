@@ -33,8 +33,8 @@ import org.eclipse.hawkbit.rest.documentation.ApiModelPropertiesGeneric;
 import org.eclipse.hawkbit.rest.documentation.DocumenationResponseFieldsSnippet;
 import org.eclipse.hawkbit.rest.documentation.MgmtApiModelProperties;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -58,10 +58,12 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
     private DistributionSet distributionSet;
 
     @Override
-    @Before
+    public String getResourceName() {
+        return "targettag";
+    }
+
+    @BeforeEach
     public void setUp() {
-        resourceName = "targettag";
-        super.setUp();
         distributionSet = createDistributionSet();
     }
 
@@ -110,7 +112,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
         final String json = mapper.writeValueAsString(Arrays.asList(bodyPut));
         this.mockMvc
                 .perform(post(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING).content(json)
-                        .contentType(MediaType.APPLICATION_JSON_UTF8))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(getRequestFieldsTargetTag(true), getResponseFieldTargetTag(true)));
     }
@@ -128,7 +130,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
 
         this.mockMvc
                 .perform(put(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING + "/{targetTagId}", tagId).content(json)
-                        .contentType(MediaType.APPLICATION_JSON_UTF8))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -142,7 +144,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
         final Long tagId = createTargetTagId();
         this.mockMvc
                 .perform(delete(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING + "/{targetTagId}", tagId)
-                        .contentType(MediaType.APPLICATION_JSON_UTF8))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(pathParameters(
                         parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID))));
@@ -159,7 +161,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
         this.mockMvc
                 .perform(get(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING
                         + MgmtRestConstants.TARGET_TAG_TARGETS_REQUEST_MAPPING, tag.getId())
-                                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -185,7 +187,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
         this.mockMvc
                 .perform(post(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING
                         + MgmtRestConstants.TARGET_TAG_TARGETS_REQUEST_MAPPING + "/toggleTagAssignment", tagId)
-                                .content(json).contentType(MediaType.APPLICATION_JSON_UTF8))
+                                .content(json).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -208,7 +210,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
         this.mockMvc
                 .perform(post(MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING
                         + MgmtRestConstants.TARGET_TAG_TARGETS_REQUEST_MAPPING, tagId).content(json)
-                                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -225,7 +227,7 @@ public class TargetTagResourceDocumentationTest extends AbstractApiRestDocumenta
                 .perform(delete(
                         MgmtRestConstants.TARGET_TAG_V1_REQUEST_MAPPING
                                 + MgmtRestConstants.TARGET_TAG_TARGETS_REQUEST_MAPPING + "/{controllerId}",
-                        tagId, target.getControllerId()).contentType(MediaType.APPLICATION_JSON_UTF8))
+                        tagId, target.getControllerId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetTagId").description(ApiModelPropertiesGeneric.ITEM_ID),

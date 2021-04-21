@@ -9,7 +9,7 @@
 package org.eclipse.hawkbit.repository.jpa.rsql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.eclipse.hawkbit.repository.ActionFields;
 import org.eclipse.hawkbit.repository.exception.RSQLParameterUnsupportedFieldException;
@@ -20,10 +20,11 @@ import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.Action.ActionType;
 import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.orm.jpa.vendor.Database;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -36,7 +37,7 @@ public class RSQLActionFieldsTest extends AbstractJpaIntegrationTest {
     private JpaTarget target;
     private JpaAction action;
 
-    @Before
+    @BeforeEach
     public void setupBeforeTest() {
         final DistributionSet dsA = testdataFactory.createDistributionSet("daA");
         target = (JpaTarget) targetManagement
@@ -55,7 +56,7 @@ public class RSQLActionFieldsTest extends AbstractJpaIntegrationTest {
             final JpaAction newAction = new JpaAction();
             newAction.setActionType(ActionType.SOFT);
             newAction.setDistributionSet(dsA);
-            newAction.setActive(i % 2 == 0);
+            newAction.setActive((i % 2) == 0);
             newAction.setStatus(Status.RUNNING);
             newAction.setTarget(target);
             newAction.setWeight(45);
@@ -71,9 +72,18 @@ public class RSQLActionFieldsTest extends AbstractJpaIntegrationTest {
     public void testFilterByParameterId() {
         assertRSQLQuery(ActionFields.ID.name() + "==" + action.getId(), 1);
         assertRSQLQuery(ActionFields.ID.name() + "!=" + action.getId(), 10);
-        assertRSQLQuery(ActionFields.ID.name() + "==noExist*", 0);
-        assertRSQLQuery(ActionFields.ID.name() + "=in=(" + action.getId() + ",1000000)", 1);
-        assertRSQLQuery(ActionFields.ID.name() + "=out=(" + action.getId() + ",1000000)", 10);
+        assertRSQLQuery(ActionFields.ID.name() + "==" + -1, 0);
+        assertRSQLQuery(ActionFields.ID.name() + "!=" + -1, 11);
+
+        // Not supported for numbers
+        if (Database.POSTGRESQL.equals(getDatabase())) {
+            return;
+        }
+
+        assertRSQLQuery(ActionFields.ID.name() + "==*", 11);
+        assertRSQLQuery(ActionFields.ID.name() + "==noexist*", 0);
+        assertRSQLQuery(ActionFields.ID.name() + "=in=(" + action.getId() + ",10000000)", 1);
+        assertRSQLQuery(ActionFields.ID.name() + "=out=(" + action.getId() + ",10000000)", 10);
     }
 
     @Test

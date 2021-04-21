@@ -29,7 +29,7 @@ import org.eclipse.hawkbit.repository.exception.InvalidTargetAttributeException;
 import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -79,9 +79,9 @@ public class DdiConfigDataTest extends AbstractDDiApiIntegrationTest {
 
         final long current = System.currentTimeMillis();
         mvc.perform(
-                get("/{tenant}/controller/v1/4712", tenantAware.getCurrentTenant()).accept(MediaTypes.HAL_JSON_UTF8))
+                get("/{tenant}/controller/v1/4712", tenantAware.getCurrentTenant()).accept(MediaTypes.HAL_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andExpect(jsonPath("$.config.polling.sleep", equalTo("00:01:00")))
                 .andExpect(jsonPath("$._links.configData.href", equalTo(
                         "http://localhost/" + tenantAware.getCurrentTenant() + "/controller/v1/4712/configData")));
@@ -103,9 +103,9 @@ public class DdiConfigDataTest extends AbstractDDiApiIntegrationTest {
         assertThat(updateControllerAttributes.isRequestControllerAttributes()).isFalse();
 
         mvc.perform(
-                get("/{tenant}/controller/v1/4712", tenantAware.getCurrentTenant()).accept(MediaTypes.HAL_JSON_UTF8))
+                get("/{tenant}/controller/v1/4712", tenantAware.getCurrentTenant()).accept(MediaTypes.HAL_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andExpect(jsonPath("$.config.polling.sleep", equalTo("00:01:00")))
                 .andExpect(jsonPath("$._links.configData.href").doesNotExist());
     }

@@ -31,8 +31,7 @@ import org.eclipse.hawkbit.rest.documentation.MgmtApiModelProperties;
 import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 
@@ -41,19 +40,15 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 
 /**
- * 
  * Documentation generation for Management API for {@link SoftwareModuleType}.
- *
  */
 @Feature("Spring Rest Docs Tests - SoftwareModuleType")
 @Story("Softwaremoduletypes Resource")
 public class SoftwaremoduleTypesDocumentationTest extends AbstractApiRestDocumentation {
 
     @Override
-    @Before
-    public void setUp() {
-        this.resourceName = "softwaremoduletypes";
-        super.setUp();
+    public String getResourceName() {
+        return "softwaremoduletypes";
     }
 
     @Test
@@ -110,7 +105,7 @@ public class SoftwaremoduleTypesDocumentationTest extends AbstractApiRestDocumen
         this.mockMvc
                 .perform(post(MgmtRestConstants.SOFTWAREMODULETYPE_V1_REQUEST_MAPPING)
                         .content(JsonBuilder.softwareModuleTypesCreatableFieldsOnly(types))
-                        .contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
                         requestFields(
@@ -194,7 +189,7 @@ public class SoftwaremoduleTypesDocumentationTest extends AbstractApiRestDocumen
 
         this.mockMvc
                 .perform(put(MgmtRestConstants.SOFTWAREMODULETYPE_V1_REQUEST_MAPPING + "/{softwareModuleTypeID}",
-                        testType.getId()).content(body.toString()).contentType(MediaType.APPLICATION_JSON_UTF8))
+                        testType.getId()).content(body.toString()).contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("softwareModuleTypeID")

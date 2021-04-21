@@ -9,7 +9,7 @@
 package org.eclipse.hawkbit.repository.jpa.rsql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.eclipse.hawkbit.repository.TargetFilterQueryFields;
 import org.eclipse.hawkbit.repository.jpa.AbstractJpaIntegrationTest;
@@ -17,9 +17,10 @@ import org.eclipse.hawkbit.repository.model.Action.ActionType;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.TargetFilterQuery;
 import org.eclipse.hawkbit.repository.test.util.TestdataFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
+import org.springframework.orm.jpa.vendor.Database;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -32,7 +33,7 @@ public class RSQLTargetFilterQueryFieldsTest extends AbstractJpaIntegrationTest 
     private TargetFilterQuery filter1;
     private TargetFilterQuery filter2;
 
-    @Before
+    @BeforeEach
     public void setupBeforeTest() throws InterruptedException {
         final String filterName1 = "filter_a";
         final String filterName2 = "filter_b";
@@ -54,7 +55,21 @@ public class RSQLTargetFilterQueryFieldsTest extends AbstractJpaIntegrationTest 
     @Test
     @Description("Test filter target filter query by id")
     public void testFilterByParameterId() {
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "==" + filter1.getId(), 1);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "!=" + filter1.getId(), 2);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "==" + -1, 0);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "!=" + -1, 3);
+
+        // Not supported for numbers
+        if (Database.POSTGRESQL.equals(getDatabase())) {
+            return;
+        }
+
         assertRSQLQuery(TargetFilterQueryFields.ID.name() + "==*", 3);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "==noexist*", 0);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "=in=(" + filter1.getId() + ",10000000)", 1);
+        assertRSQLQuery(TargetFilterQueryFields.ID.name() + "=out=(" + filter1.getId() + ",10000000)", 2);
+
     }
 
     @Test

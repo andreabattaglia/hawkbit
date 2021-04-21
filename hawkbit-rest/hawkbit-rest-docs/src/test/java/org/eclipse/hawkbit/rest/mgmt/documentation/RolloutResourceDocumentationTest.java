@@ -41,8 +41,8 @@ import org.eclipse.hawkbit.rest.documentation.DocumenationResponseFieldsSnippet;
 import org.eclipse.hawkbit.rest.documentation.MgmtApiModelProperties;
 import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.MediaTypes;
@@ -69,10 +69,12 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
     private RolloutTestApprovalStrategy approvalStrategy;
 
     @Override
-    @Before
+    public String getResourceName() {
+        return "rollouts";
+    }
+
+    @BeforeEach
     public void setUp() {
-        this.resourceName = "rollouts";
-        super.setUp();
         arrayPrefix = "content[].";
         approvalStrategy.setApprovalNeeded(false);
     }
@@ -86,7 +88,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(getRolloutResponseFields(true, false,
                         fieldWithPath("total").description(ApiModelPropertiesGeneric.TOTAL_ELEMENTS),
                         fieldWithPath("size").type(JsonFieldType.NUMBER).description(ApiModelPropertiesGeneric.SIZE),
@@ -102,7 +104,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
         mockMvc.perform(get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING).param("offset", "0").param("limit", "2")
                 .param("sort", "id:DESC").param("q", "name==exampleRollout*").accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(getFilterRequestParamter()));
     }
 
@@ -167,7 +169,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING + "/{rolloutId}", rollout.getId())
                 .accept(MediaTypes.HAL_JSON_VALUE)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(getRolloutResponseFields(false, true),
                         pathParameters(parameterWithName("rolloutId").description(ApiModelPropertiesGeneric.ITEM_ID))));
     }
@@ -195,9 +197,9 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
                 post(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING)
                         .content(JsonBuilder.rollout(name, description, groupSize, dsId, targetFilter,
                                 rolloutGroupConditions, type))
-                        .contentType(MediaTypes.HAL_JSON_UTF8).accept(MediaTypes.HAL_JSON_VALUE))
+                        .contentType(MediaTypes.HAL_JSON).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(requestFields(
                         requestFieldWithPath("name").description(ApiModelPropertiesGeneric.NAME),
                         requestFieldWithPathMandatoryInMultiAssignMode("weight").type(JsonFieldType.NUMBER)
@@ -285,7 +287,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
                                 rolloutGroupConditions, rolloutGroups))
                         .contentType(MediaType.APPLICATION_JSON).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         requestFields(requestFieldWithPath("name").description(ApiModelPropertiesGeneric.NAME),
                                 requestFieldWithPathMandatoryInMultiAssignMode("weight")
@@ -448,7 +450,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING + "/{rolloutId}/deploygroups", rollout.getId())
                 .accept(MediaTypes.HAL_JSON_VALUE)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         getRolloutDeployGroupResponseFields(true, false,
                                 fieldWithPath("total").description(ApiModelPropertiesGeneric.TOTAL_ELEMENTS),
@@ -469,7 +471,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
         mockMvc.perform(get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING + "/{rolloutId}/deploygroups/{deployGroupId}",
                 rollout.getId(), firstRolloutGroup.getId()).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(getRolloutDeployGroupResponseFields(false, true),
                         pathParameters(parameterWithName("rolloutId").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 parameterWithName("deployGroupId").description(ApiModelPropertiesGeneric.ITEM_ID))));
@@ -557,7 +559,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
                         .param("sort", "id:DESC").param("q", "id==" + firstRolloutGroup.getId())
                         .accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("rolloutId").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 parameterWithName("deployGroupId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -576,7 +578,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
                 get(MgmtRestConstants.ROLLOUT_V1_REQUEST_MAPPING + "/{rolloutId}/deploygroups/{deployGroupId}/targets",
                         rollout.getId(), firstRolloutGroup.getId()).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("rolloutId").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 parameterWithName("deployGroupId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -626,7 +628,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
                                 .param("sort", "name:ASC").param("q", "controllerId==exampleTarget0")
                                 .accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("rolloutId").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 parameterWithName("deployGroupId").description(ApiModelPropertiesGeneric.ITEM_ID)),

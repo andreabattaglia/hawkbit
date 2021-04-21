@@ -13,7 +13,7 @@ import org.eclipse.hawkbit.repository.test.TestConfiguration;
 import org.eclipse.hawkbit.repository.test.util.AbstractIntegrationTest;
 import org.eclipse.hawkbit.rest.filter.ExcludePathAwareShallowETagFilter;
 import org.eclipse.hawkbit.rest.util.FilterHttpResponse;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 /**
  * Abstract Test for Rest tests.
@@ -39,18 +40,21 @@ public abstract class AbstractRestIntegrationTest extends AbstractIntegrationTes
     private FilterHttpResponse filterHttpResponse;
 
     @Autowired
+    private CharacterEncodingFilter characterEncodingFilter;
+
+    @Autowired
     protected WebApplicationContext webApplicationContext;
 
-    @Override
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         mvc = createMvcWebAppContext(webApplicationContext).build();
     }
 
     protected DefaultMockMvcBuilder createMvcWebAppContext(final WebApplicationContext context) {
         final DefaultMockMvcBuilder createMvcWebAppContext = MockMvcBuilders.webAppContextSetup(context);
 
+        // CharacterEncodingFilter is needed for the encoding properties to be imported properly
+        createMvcWebAppContext.addFilter(characterEncodingFilter);
         createMvcWebAppContext.addFilter(
                 new ExcludePathAwareShallowETagFilter("/rest/v1/softwaremodules/{smId}/artifacts/{artId}/download",
                         "/{tenant}/controller/v1/{controllerId}/softwaremodules/{softwareModuleId}/artifacts/**",

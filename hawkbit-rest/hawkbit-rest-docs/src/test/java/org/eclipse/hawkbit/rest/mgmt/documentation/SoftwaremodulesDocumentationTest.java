@@ -40,8 +40,7 @@ import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -59,10 +58,8 @@ import io.qameta.allure.Story;
 public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentation {
 
     @Override
-    @Before
-    public void setUp() {
-        resourceName = "softwaremodules";
-        super.setUp();
+    public String getResourceName() {
+        return "softwaremodules";
     }
 
     @Test
@@ -78,7 +75,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
                 .update(entityFactory.softwareModule().update(sm2.getId()).description("a description"));
 
         mockMvc.perform(get(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING)).andDo(MockMvcResultPrinter.print())
-                .andExpect(status().isOk()).andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(status().isOk()).andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(responseFields(
                         fieldWithPath("total").description(ApiModelPropertiesGeneric.TOTAL_ELEMENTS),
                         fieldWithPath("size").type(JsonFieldType.NUMBER).description(ApiModelPropertiesGeneric.SIZE),
@@ -114,7 +111,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
                 .param("limit", "2").param("sort", "version:DESC").param("q", "name==SM*"))
 
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(getFilterRequestParamter()));
     }
 
@@ -130,9 +127,9 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
         final List<SoftwareModule> modules = Arrays.asList(os, ah);
 
         mockMvc.perform(post(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING)
-                .content(JsonBuilder.softwareModulesCreatableFieldsOnly(modules)).contentType(MediaTypes.HAL_JSON_UTF8))
+                .content(JsonBuilder.softwareModulesCreatableFieldsOnly(modules)).contentType(MediaTypes.HAL_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         requestFields(requestFieldWithPath("[]name").description(ApiModelPropertiesGeneric.NAME),
                                 optionalRequestFieldWithPath("[]description")
@@ -179,7 +176,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(get(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}", sm.getId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -211,9 +208,9 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
                 .vendor("another Vendor").description("a new description").type(Constants.SMT_DEFAULT_OS_KEY).build();
 
         mockMvc.perform(put(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}", sm.getId())
-                .content(JsonBuilder.softwareModuleUpdatableFieldsOnly(update)).contentType(MediaTypes.HAL_JSON_UTF8))
+                .content(JsonBuilder.softwareModuleUpdatableFieldsOnly(update)).contentType(MediaTypes.HAL_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -251,7 +248,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
         mockMvc.perform(
                 get(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts", sm.getId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -282,11 +279,9 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
         final byte random[] = RandomStringUtils.random(5).getBytes();
         final MockMultipartFile file = new MockMultipartFile("file", "origFilename", null, random);
 
-        mockMvc.perform(
-                fileUpload(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts",
-                        sm.getId()).file(file))
+        mockMvc.perform(fileUpload(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts", sm.getId()).file(file))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -318,12 +313,11 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
         final byte random[] = RandomStringUtils.random(5).getBytes();
         final MockMultipartFile file = new MockMultipartFile("file", "origFilename", null, random);
 
-        mockMvc.perform(
-                fileUpload(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts",
+        mockMvc.perform(fileUpload(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts",
                         sm.getId()).file(file).param("filename", "filename").param("file", "s")
                                 .param("md5sum", "md5sum").param("sha1sum", "sha1sum"))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andDo(this.document.document(requestParameters(
                         parameterWithName("filename").description(MgmtApiModelProperties.ARTIFACT_PROVIDED_FILENAME),
                         parameterWithName("file").description(MgmtApiModelProperties.ARTIFACT_PROVIDED_FILE),
@@ -365,7 +359,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
                 get(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/artifacts/{artifactId}",
                         sm.getId(), artifact.getId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID),
@@ -424,7 +418,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(get(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/metadata",
                 module.getId())).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -456,7 +450,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
                 module.getId()).param("offset", "1").param("limit", "2").param("sort", "key:DESC").param("q",
                         "key==known*"))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -485,9 +479,9 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
         jsonArray.put(new JSONObject().put("key", knownKey2).put("value", knownValue2).put("targetVisible", true));
 
         mockMvc.perform(post(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/metadata",
-                module.getId()).contentType(MediaTypes.HAL_JSON_UTF8).content(jsonArray.toString()))
+                module.getId()).contentType(MediaTypes.HAL_JSON).content(jsonArray.toString()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
                         pathParameters(
                                 parameterWithName("softwareModuleId").description(ApiModelPropertiesGeneric.ITEM_ID)),
@@ -569,7 +563,7 @@ public class SoftwaremodulesDocumentationTest extends AbstractApiRestDocumentati
 
         mockMvc.perform(
                 put(MgmtRestConstants.SOFTWAREMODULE_V1_REQUEST_MAPPING + "/{softwareModuleId}/metadata/{metadataKey}",
-                        module.getId(), knownKey).contentType(MediaTypes.HAL_JSON_UTF8).content(jsonObject.toString()))
+                        module.getId(), knownKey).contentType(MediaTypes.HAL_JSON).content(jsonObject.toString()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("softwareModuleId")

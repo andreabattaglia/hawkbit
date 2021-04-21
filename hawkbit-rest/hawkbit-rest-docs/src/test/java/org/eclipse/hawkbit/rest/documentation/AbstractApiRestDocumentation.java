@@ -40,11 +40,12 @@ import org.eclipse.hawkbit.rest.AbstractRestIntegrationTest;
 import org.eclipse.hawkbit.rest.RestConfiguration;
 import org.eclipse.hawkbit.rest.util.FilterHttpResponse;
 import org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
-import org.springframework.restdocs.JUnitRestDocumentation;
+import org.springframework.restdocs.RestDocumentationContextProvider;
+import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.restdocs.payload.FieldDescriptor;
@@ -64,14 +65,12 @@ import io.qameta.allure.Feature;
  * Parent class for all Management API rest documentation classes.
  *
  */
-@Feature("Documentation Verfication - API")
+@Feature("Documentation Verification - API")
+@ExtendWith(RestDocumentationExtension.class)
 @ContextConfiguration(classes = { DdiApiConfiguration.class, MgmtApiConfiguration.class, RestConfiguration.class,
         RepositoryApplicationConfiguration.class, TestConfiguration.class, TestSupportBinderAutoConfiguration.class })
 @TestPropertySource(locations = { "classpath:/updateserver-restdocumentation-test.properties" })
 public abstract class AbstractApiRestDocumentation extends AbstractRestIntegrationTest {
-
-    @Rule
-    public final JUnitRestDocumentation restDocumentation = new JUnitRestDocumentation("target/generated-snippets");
 
     @Autowired
     protected ObjectMapper objectMapper;
@@ -81,20 +80,26 @@ public abstract class AbstractApiRestDocumentation extends AbstractRestIntegrati
 
     protected MockMvc mockMvc;
 
-    protected String resourceName = "output";
-
     protected RestDocumentationResultHandler document;
 
     protected String arrayPrefix;
 
     protected String host = "management-api.host";
 
-    @Before
-    protected void setUp() {
-        this.document = document(resourceName + "/{method-name}", preprocessRequest(prettyPrint()),
+    /**
+     * The generated REST docs snippets will be outputted to an own resource folder.
+     * The child class has to specify the name of that output folder where to put its corresponding snippets.
+     *
+     * @return the name of the resource folder
+     */
+    public abstract String getResourceName();
+
+    @BeforeEach
+    protected void setupMvc(final RestDocumentationContextProvider restDocContext) {
+        this.document = document(getResourceName() + "/{method-name}", preprocessRequest(prettyPrint()),
                 preprocessResponse(prettyPrint()));
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-                .apply(MockMvcRestDocumentation.documentationConfiguration(this.restDocumentation).uris()
+                .apply(MockMvcRestDocumentation.documentationConfiguration(restDocContext).uris()
                         .withScheme("https").withHost(host + ".com").withPort(443))
                 .alwaysDo(this.document).addFilter(filterHttpResponse).build();
         arrayPrefix = "[]";

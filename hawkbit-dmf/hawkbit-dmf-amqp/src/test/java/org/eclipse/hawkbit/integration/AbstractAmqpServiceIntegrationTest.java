@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
+import org.assertj.core.api.HamcrestCondition;
 import org.eclipse.hawkbit.amqp.DmfApiConfiguration;
 import org.eclipse.hawkbit.dmf.amqp.api.AmqpSettings;
 import org.eclipse.hawkbit.dmf.amqp.api.EventTopic;
@@ -43,13 +44,13 @@ import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.repository.test.TestConfiguration;
 import org.eclipse.hawkbit.repository.test.util.TestdataFactory;
+import org.eclipse.hawkbit.repository.test.util.WithSpringAuthorityRule;
 import org.eclipse.hawkbit.util.IpUtil;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.junit.BrokerRunningSupport;
 import org.springframework.amqp.rabbit.test.RabbitListenerTestHarness;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
@@ -77,10 +78,7 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
     @Autowired
     private RabbitListenerTestHarness harness;
 
-    @Autowired
-    private ConnectionFactory connectionFactory;
-
-    @Before
+    @BeforeEach
     public void initListener() {
         deadletterListener = harness.getSpy(DeadletterListener.LISTENER_ID);
         assertThat(deadletterListener).isNotNull();
@@ -93,22 +91,19 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
     }
 
     private <T> T waitUntilIsPresent(final Callable<Optional<T>> callable) {
-        createConditionFactory().until(() -> {
-            return securityRule.runAsPrivileged(() -> callable.call().isPresent());
-        });
+
+        createConditionFactory().until(() -> WithSpringAuthorityRule.runAsPrivileged(() -> callable.call().isPresent()));
 
         try {
-            return securityRule.runAsPrivileged(() -> callable.call().get());
+            return WithSpringAuthorityRule.runAsPrivileged(() -> callable.call().get());
         } catch (final Exception e) {
             return null;
         }
     }
 
     protected void waitUntilEventMessagesAreDispatchedToTarget(final EventTopic... eventTopics) {
-        createConditionFactory().untilAsserted(() -> {
-            assertThat(replyToListener.getLatestEventMessageTopics())
-                    .containsExactlyInAnyOrderElementsOf(Arrays.asList(eventTopics));
-        });
+        createConditionFactory().untilAsserted(() -> assertThat(replyToListener.getLatestEventMessageTopics())
+                .containsExactlyInAnyOrderElementsOf(Arrays.asList(eventTopics)));
         replyToListener.resetLatestEventMessageTopics();
     }
 
@@ -193,11 +188,11 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
 
     protected void assertDmfDownloadAndUpdateRequest(final DmfDownloadAndUpdateRequest request,
             final Set<SoftwareModule> softwareModules, final String controllerId) {
-        Assert.assertThat(softwareModules, SoftwareModuleJsonMatcher.containsExactly(request.getSoftwareModules()));
-        request.getSoftwareModules()
-                .forEach(dmfModule -> assertThat(dmfModule.getMetadata()).containsExactly(
-                        new DmfMetadata(TestdataFactory.VISIBLE_SM_MD_KEY, TestdataFactory.VISIBLE_SM_MD_VALUE)));
+        assertThat(softwareModules).is(new HamcrestCondition<>(SoftwareModuleJsonMatcher.containsExactly(request.getSoftwareModules())));
+        request.getSoftwareModules().forEach(dmfModule -> assertThat(dmfModule.getMetadata()).containsExactly(
+                new DmfMetadata(TestdataFactory.VISIBLE_SM_MD_KEY, TestdataFactory.VISIBLE_SM_MD_VALUE)));
         final Target updatedTarget = waitUntilIsPresent(() -> targetManagement.getByControllerID(controllerId));
+        assertThat(updatedTarget).isNotNull();
         assertThat(updatedTarget.getSecurityToken()).isEqualTo(request.getTargetSecurityToken());
     }
 
@@ -223,9 +218,8 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
     }
 
     protected void verifyReplyToListener() {
-        createConditionFactory().untilAsserted(() -> {
-            Mockito.verify(replyToListener, Mockito.atLeast(1)).handleMessage(Mockito.any());
-        });
+        createConditionFactory()
+                .untilAsserted(() -> Mockito.verify(replyToListener, Mockito.atLeast(1)).handleMessage(Mockito.any()));
     }
 
     protected Long cancelAction(final Long actionId, final String controllerId) {
@@ -273,9 +267,10 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
             final int existingTargetsAfterCreation, final TargetUpdateStatus expectedTargetStatus,
             final String createdBy) {
         createAndSendThingCreated(target, TENANT_EXIST);
-        final Target registerdTarget = waitUntilIsPresent(() -> targetManagement.getByControllerID(target));
+        final Target registeredTarget = waitUntilIsPresent(() -> targetManagement.getByControllerID(target));
         assertAllTargetsCount(existingTargetsAfterCreation);
-        assertTarget(registerdTarget, expectedTargetStatus, createdBy);
+        assertThat(registeredTarget).isNotNull();
+        assertTarget(registeredTarget, expectedTargetStatus, createdBy);
     }
 
     protected void registerSameTargetAndAssertBasedOnVersion(final String controllerId,
@@ -284,6 +279,7 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
         createAndSendThingCreated(controllerId, TENANT_EXIST);
         final Target registeredTarget = waitUntilIsPresent(() -> findTargetBasedOnNewVersion(controllerId, version));
         assertAllTargetsCount(existingTargetsAfterCreation);
+        assertThat(registeredTarget).isNotNull();
         assertThat(registeredTarget.getUpdateStatus()).isEqualTo(expectedTargetStatus);
     }
 
@@ -302,7 +298,7 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
         assertThat(target.getCreatedBy()).isEqualTo(createdBy);
         assertThat(target.getUpdateStatus()).isEqualTo(updateStatus);
         assertThat(target.getAddress()).isEqualTo(
-                IpUtil.createAmqpUri(connectionFactory.getVirtualHost(), DmfTestConfiguration.REPLY_TO_EXCHANGE));
+                IpUtil.createAmqpUri(getVirtualHost(), DmfTestConfiguration.REPLY_TO_EXCHANGE));
     }
 
     protected Message createTargetMessage(final String target, final String tenant) {
@@ -367,7 +363,7 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
 
         createConditionFactory().untilAsserted(() -> {
             try {
-                final Map<String, String> controllerAttributes = securityRule
+                final Map<String, String> controllerAttributes = WithSpringAuthorityRule
                         .runAsPrivileged(() -> targetManagement.getControllerAttributes(controllerId));
                 assertThat(controllerAttributes.size()).isEqualTo(attributes.size());
                 attributes.forEach((k, v) -> assertKeyValueInMap(k, v, controllerAttributes));

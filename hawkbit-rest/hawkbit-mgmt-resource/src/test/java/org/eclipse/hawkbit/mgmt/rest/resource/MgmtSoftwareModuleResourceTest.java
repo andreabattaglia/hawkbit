@@ -14,10 +14,10 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -50,10 +50,11 @@ import org.eclipse.hawkbit.repository.test.util.WithUser;
 import org.eclipse.hawkbit.rest.json.model.ExceptionInfo;
 import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
+import org.hamcrest.Matchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
@@ -78,7 +79,7 @@ import io.qameta.allure.Story;
         "hawkbit.server.security.dos.maxArtifactStorage=500000" })
 public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTest {
 
-    @Before
+    @BeforeEach
     public void assertPreparationOfRepo() {
         assertThat(softwareModuleManagement.findAll(PAGE)).as("no softwaremodule should be founded").hasSize(0);
     }
@@ -170,10 +171,10 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         // upload
         final MvcResult mvcResult = mvc
-                .perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+                .perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.hashes.md5", equalTo(md5sum)))
                 .andExpect(jsonPath("$.hashes.sha1", equalTo(sha1sum)))
                 .andExpect(jsonPath("$.hashes.sha256", equalTo(sha256sum)))
@@ -207,7 +208,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final MockMultipartFile file = new MockMultipartFile("file", "origFilename", null, randomBytes);
 
         // try to upload
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.exceptionClass", equalTo(FileSizeQuotaExceededException.class.getName())))
@@ -223,7 +224,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final byte[] randomBytes = randomBytes(5 * 1024);
         final MockMultipartFile file = new MockMultipartFile("file", illegalFilename, null, randomBytes);
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Invalid characters in string")));
@@ -238,8 +239,8 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         try (InputStream fileInputStream = artifactManagement
                 .loadArtifactBinary(softwareModuleManagement.get(sm.getId()).get().getArtifacts().get(0).getSha1Hash())
                 .get().getFileInputStream()) {
-            assertTrue("Wrong artifact content",
-                    IOUtils.contentEquals(new ByteArrayInputStream(random), fileInputStream));
+            assertTrue(
+                    IOUtils.contentEquals(new ByteArrayInputStream(random), fileInputStream), "Wrong artifact content");
         }
 
         // hashes
@@ -267,7 +268,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         final MockMultipartFile file = new MockMultipartFile("file", "orig", null, new byte[0]);
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest());
     }
@@ -283,15 +284,15 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final String sha256sum = HashGeneratorUtils.generateSHA256(random);
         final MockMultipartFile file = new MockMultipartFile("file", "orig", null, random);
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.hashes.md5", equalTo(md5sum)))
                 .andExpect(jsonPath("$.hashes.sha1", equalTo(sha1sum)))
                 .andExpect(jsonPath("$.hashes.sha256", equalTo(sha256sum)))
                 .andExpect(jsonPath("$.providedFilename", equalTo("orig"))).andExpect(status().isCreated());
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file))
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isConflict());
     }
 
@@ -306,9 +307,9 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final MockMultipartFile file = new MockMultipartFile("file", "origFilename", null, random);
 
         // upload
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file).param("filename",
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file).param("filename",
                 "customFilename")).andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8))
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andExpect(jsonPath("$.providedFilename", equalTo("customFilename"))).andExpect(status().isCreated());
 
         // check result in db...
@@ -335,7 +336,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         // upload
         // wrong sha1
         MvcResult mvcResult = mvc
-                .perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+                .perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                         .param("md5sum", md5sum).param("sha1sum", "afsdff").param("sha256sum", sha256sum))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest()).andReturn();
 
@@ -346,7 +347,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         // wrong sha256
         mvcResult = mvc
-                .perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+                .perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                         .param("md5sum", md5sum).param("sha1sum", sha1sum).param("sha256sum", "jdshfsd"))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest()).andReturn();
 
@@ -357,7 +358,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         // wrong md5
         mvcResult = mvc
-                .perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+                .perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                         .param("md5sum", "sdfsdfs").param("sha1sum", sha1sum).param("sha256sum", sha256sum))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest()).andReturn();
 
@@ -366,7 +367,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         assertThat(exceptionInfo.getErrorCode()).as("Exception contains wrong error code")
                 .isEqualTo(SpServerError.SP_ARTIFACT_UPLOAD_FAILED_MD5_MATCH.getKey());
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .param("md5sum", md5sum).param("sha1sum", sha1sum)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isCreated());
 
@@ -389,10 +390,9 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
             final MockMultipartFile file = new MockMultipartFile("file", "origFilename" + i, null, random);
 
             // upload
-            mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+            mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                     .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
-                    .andExpect(status().isCreated())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                    .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                     .andExpect(jsonPath("$.hashes.md5", equalTo(md5sum)))
                     .andExpect(jsonPath("$.hashes.sha1", equalTo(sha1sum)))
                     .andExpect(jsonPath("$.hashes.sha256", equalTo(sha256sum)))
@@ -405,7 +405,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final MockMultipartFile file = new MockMultipartFile("file", "origFilename_final", null, random);
 
         // upload
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.exceptionClass", equalTo(AssignmentQuotaExceededException.class.getName())))
@@ -433,10 +433,9 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
             // upload
             final SoftwareModule sm = testdataFactory.createSoftwareModuleOs("sm" + i);
-            mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+            mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                     .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
-                    .andExpect(status().isCreated())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                    .andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                     .andExpect(jsonPath("$.hashes.md5", equalTo(md5sum)))
                     .andExpect(jsonPath("$.hashes.sha1", equalTo(sha1sum)))
                     .andExpect(jsonPath("$.hashes.sha256", equalTo(sha256sum)))
@@ -450,7 +449,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         // upload
         final SoftwareModule sm = testdataFactory.createSoftwareModuleOs("sm" + numArtifacts);
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).file(file)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.exceptionClass", equalTo(StorageQuotaExceededException.class.getName())))
@@ -486,7 +485,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
                 .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                 .andExpect(header().string("ETag", artifact.getSha1Hash())).andReturn();
 
-        assertTrue("Wrong response content", Arrays.equals(result.getResponse().getContentAsByteArray(), random));
+        assertTrue(Arrays.equals(result.getResponse().getContentAsByteArray(), random), "Wrong response content");
     }
 
     @Test
@@ -504,7 +503,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         // perform test
         mvc.perform(get("/rest/v1/softwaremodules/{smId}/artifacts/{artId}", sm.getId(), artifact.getId())
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.id", equalTo(artifact.getId().intValue())))
                 .andExpect(jsonPath("$.size", equalTo(random.length)))
                 .andExpect(jsonPath("$.hashes.md5", equalTo(artifact.getMd5Hash())))
@@ -516,6 +515,31 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
                                 + artifact.getId() + "/download")))
                 .andExpect(jsonPath("$._links.self.href", equalTo(
                         "http://localhost/rest/v1/softwaremodules/" + sm.getId() + "/artifacts/" + artifact.getId())));
+    }
+
+    @Test
+    @Description("Verifies the listing of an artifact that belongs to a soft deleted software module.")
+    public void getArtifactSoftDeleted() throws Exception {
+        // prepare data for test
+        final SoftwareModule sm = testdataFactory.createSoftwareModuleOs("softDeleted");
+        final Artifact artifact = testdataFactory.createArtifacts(sm.getId()).get(0);
+        testdataFactory.createDistributionSet(Arrays.asList(sm));
+        softwareModuleManagement.delete(sm.getId());
+
+        // perform test
+        mvc.perform(get("/rest/v1/softwaremodules/{smId}/artifacts/{artId}", sm.getId(), artifact.getId())
+                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", equalTo(artifact.getId().intValue())))
+                .andExpect(jsonPath("$.size", equalTo((int) artifact.getSize())))
+                .andExpect(jsonPath("$.hashes.md5", equalTo(artifact.getMd5Hash())))
+                .andExpect(jsonPath("$.hashes.sha1", equalTo(artifact.getSha1Hash())))
+                .andExpect(jsonPath("$.hashes.sha256", equalTo(artifact.getSha256Hash())))
+                .andExpect(jsonPath("$.providedFilename", equalTo(artifact.getFilename())))
+                .andExpect(jsonPath("$._links", Matchers.not(Matchers.hasKey("download"))))
+                .andExpect(jsonPath("$._links.self.href",
+                        equalTo(String.format("http://localhost/rest/v1/softwaremodules/%d/artifacts/%d", sm.getId(),
+                                artifact.getId()))));
     }
 
     @Test
@@ -533,7 +557,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         mvc.perform(get("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.[0].id", equalTo(artifact.getId().intValue())))
                 .andExpect(jsonPath("$.[0].size", equalTo(random.length)))
                 .andExpect(jsonPath("$.[0].hashes.md5", equalTo(artifact.getMd5Hash())))
@@ -562,6 +586,11 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         final SoftwareModule sm = testdataFactory.createSoftwareModuleOs();
 
+        final SoftwareModule smSoftDeleted = testdataFactory.createSoftwareModuleOs("softDeleted");
+        final Artifact artifactSoftDeleted = testdataFactory.createArtifacts(smSoftDeleted.getId()).get(0);
+        testdataFactory.createDistributionSet(Arrays.asList(smSoftDeleted));
+        softwareModuleManagement.delete(smSoftDeleted.getId());
+
         // no artifact available
         mvc.perform(get("/rest/v1/softwaremodules/{smId}/artifacts/1234567/download", sm.getId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
@@ -575,11 +604,11 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         mvc.perform(get("/rest/v1/softwaremodules/1234567890/artifacts")).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isNotFound());
 
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/1234567890/artifacts").file(file))
+        mvc.perform(multipart("/rest/v1/softwaremodules/1234567890/artifacts").file(file))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
         // bad request - no content
-        mvc.perform(fileUpload("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()))
+        mvc.perform(multipart("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest());
 
         // not allowed methods
@@ -588,6 +617,10 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         mvc.perform(delete("/rest/v1/softwaremodules/{smId}/artifacts", sm.getId())).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isMethodNotAllowed());
+
+        // SM soft deleted
+        mvc.perform(get("/rest/v1/softwaremodules/{smId}/artifacts/{artifactId}/download", smSoftDeleted.getId(),
+                artifactSoftDeleted.getId())).andDo(MockMvcResultPrinter.print()).andExpect(status().isGone());
     }
 
     @Test
@@ -689,7 +722,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         mvc.perform(get("/rest/v1/softwaremodules").accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.content.[?(@.id==" + os.getId() + ")].name", contains(os.getName())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + os.getId() + ")].version", contains(os.getVersion())))
                 .andExpect(
@@ -727,7 +760,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         // only by name, only one exists per name
         mvc.perform(get("/rest/v1/softwaremodules?q=name==" + os1.getName()).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.content.[?(@.id==" + os1.getId() + ")].name", contains(os1.getName())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + os1.getId() + ")].version", contains(os1.getVersion())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + os1.getId() + ")].description",
@@ -739,7 +772,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         // by type, 2 software modules per type exists
         mvc.perform(get("/rest/v1/softwaremodules?q=type==" + Constants.SMT_DEFAULT_APP_KEY)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].name", contains(app1.getName())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].version", contains(app1.getVersion())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].description",
@@ -761,7 +794,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
                 "/rest/v1/softwaremodules?q=type==" + Constants.SMT_DEFAULT_APP_KEY + ";version==" + app1.getVersion())
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].name", contains(app1.getName())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].version", contains(app1.getVersion())))
                 .andExpect(jsonPath("$.content.[?(@.id==" + app1.getId() + ")].description",
@@ -796,7 +829,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
 
         mvc.perform(get("/rest/v1/softwaremodules/{smId}", os.getId()).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.name", equalTo(os.getName())))
                 .andExpect(jsonPath("$.version", equalTo(os.getVersion())))
                 .andExpect(jsonPath("$.description", equalTo(os.getDescription())))
@@ -830,10 +863,10 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         final long current = System.currentTimeMillis();
 
         final MvcResult mvcResult = mvc
-                .perform(post("/rest/v1/softwaremodules/").accept(MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .perform(post("/rest/v1/softwaremodules/").accept(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonBuilder.softwareModules(modules)).contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("[0].name", equalTo("name1")))
                 .andExpect(jsonPath("[0].version", equalTo("version1")))
                 .andExpect(jsonPath("[0].description", equalTo("description1")))
@@ -976,7 +1009,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         mvc.perform(post("/rest/v1/softwaremodules/{swId}/metadata", sm.getId()).accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON).content(metaData1.toString()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("[0]key", equalTo(knownKey1))).andExpect(jsonPath("[0]value", equalTo(knownValue1)))
                 .andExpect(jsonPath("[0]targetVisible", equalTo(false)))
                 .andExpect(jsonPath("[1]key", equalTo(knownKey2))).andExpect(jsonPath("[1]value", equalTo(knownValue2)))
@@ -1028,7 +1061,7 @@ public class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegra
         mvc.perform(put("/rest/v1/softwaremodules/{swId}/metadata/{key}", sm.getId(), knownKey)
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .content(jsonObject.toString())).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("key", equalTo(knownKey))).andExpect(jsonPath("value", equalTo(updateValue)));
 
         final SoftwareModuleMetadata assertDS = softwareModuleManagement

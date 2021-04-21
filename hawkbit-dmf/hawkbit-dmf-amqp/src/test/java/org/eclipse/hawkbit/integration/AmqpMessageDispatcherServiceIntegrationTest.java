@@ -38,6 +38,7 @@ import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleCreatedE
 import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleUpdatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetUpdatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.TenantConfigurationCreatedEvent;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.model.Action.ActionType;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
@@ -49,7 +50,8 @@ import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.repository.test.matcher.Expect;
 import org.eclipse.hawkbit.repository.test.matcher.ExpectEvents;
-import org.junit.Test;
+import org.eclipse.hawkbit.repository.test.util.WithSpringAuthorityRule;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.amqp.core.Message;
 
@@ -170,7 +172,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = ActionCreatedEvent.class, count = 2), @Expect(type = ActionUpdatedEvent.class, count = 0),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 6),
             @Expect(type = DistributionSetCreatedEvent.class, count = 2),
-            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1) })
+            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void assignMultipleDsInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "assignMultipleDsInMultiAssignMode";
@@ -179,7 +182,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
         final Long actionId1 = assignNewDsToTarget(controllerId, 450);
         final Entry<Long, EventTopic> action1Install = new SimpleEntry<>(actionId1, EventTopic.DOWNLOAD_AND_INSTALL);
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.MULTI_ACTION);
-        assertLatestMultiActionMessage(controllerId, Arrays.asList(action1Install));
+        assertLatestMultiActionMessage(controllerId, Collections.singletonList(action1Install));
 
         final Long actionId2 = assignNewDsToTarget(controllerId, 111);
         final Entry<Long, EventTopic> action2Install = new SimpleEntry<>(actionId2, EventTopic.DOWNLOAD_AND_INSTALL);
@@ -254,7 +257,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = ActionCreatedEvent.class, count = 2), @Expect(type = ActionUpdatedEvent.class, count = 2),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 6),
             @Expect(type = DistributionSetCreatedEvent.class, count = 2),
-            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1) })
+            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void cancelActionInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "cancelActionInMultiAssignMode";
@@ -273,7 +277,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
         updateActionViaDmfClient(controllerId, actionId1, DmfActionStatus.CANCELED);
 
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.MULTI_ACTION);
-        assertLatestMultiActionMessage(controllerId, Arrays.asList(action2Install));
+        assertLatestMultiActionMessage(controllerId, Collections.singletonList(action2Install));
     }
 
     @Test
@@ -286,7 +290,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = ActionCreatedEvent.class, count = 2), @Expect(type = ActionUpdatedEvent.class, count = 1),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 6),
             @Expect(type = DistributionSetCreatedEvent.class, count = 2),
-            @Expect(type = TargetUpdatedEvent.class, count = 3), @Expect(type = TargetPollEvent.class, count = 1) })
+            @Expect(type = TargetUpdatedEvent.class, count = 3), @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void finishActionInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "finishActionInMultiAssignMode";
@@ -300,7 +305,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
         updateActionViaDmfClient(controllerId, actionId1, DmfActionStatus.FINISHED);
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.REQUEST_ATTRIBUTES_UPDATE, EventTopic.MULTI_ACTION);
         assertRequestAttributesUpdateMessage(controllerId);
-        assertLatestMultiActionMessage(controllerId, Arrays.asList(action2Install));
+        assertLatestMultiActionMessage(controllerId, Collections.singletonList(action2Install));
     }
 
     @Test
@@ -312,7 +317,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = ActionCreatedEvent.class, count = 2), @Expect(type = ActionUpdatedEvent.class, count = 0),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
             @Expect(type = DistributionSetCreatedEvent.class, count = 1),
-            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1) })
+            @Expect(type = TargetUpdatedEvent.class, count = 2), @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void assignDsMultipleTimesInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "assignDsMultipleTimesInMultiAssignMode";
@@ -359,7 +365,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = TargetUpdatedEvent.class, count = 1), @Expect(type = TargetPollEvent.class, count = 1),
             @Expect(type = RolloutCreatedEvent.class, count = 2), @Expect(type = RolloutUpdatedEvent.class, count = 6),
             @Expect(type = RolloutGroupCreatedEvent.class, count = 2),
-            @Expect(type = RolloutGroupUpdatedEvent.class, count = 4) })
+            @Expect(type = RolloutGroupUpdatedEvent.class, count = 4),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void startRolloutsWithSameDsInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "startRolloutsWithSameDsInMultiAssignMode";
@@ -371,7 +378,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
 
         createAndStartRollout(ds, filterQuery, 122);
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.MULTI_ACTION);
-        assertLatestMultiActionMessageContainsInstallMessages(controllerId, Arrays.asList(smIds));
+        assertLatestMultiActionMessageContainsInstallMessages(controllerId, Collections.singletonList(smIds));
 
         createAndStartRollout(ds, filterQuery, 43);
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.MULTI_ACTION);
@@ -389,7 +396,8 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
             @Expect(type = TargetAttributesRequestedEvent.class, count = 2),
             @Expect(type = RolloutCreatedEvent.class, count = 3), @Expect(type = RolloutUpdatedEvent.class, count = 9),
             @Expect(type = RolloutGroupCreatedEvent.class, count = 3),
-            @Expect(type = RolloutGroupUpdatedEvent.class, count = 6) })
+            @Expect(type = RolloutGroupUpdatedEvent.class, count = 6),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     public void startMultipleRolloutsAndFinishInMultiAssignMode() {
         enableMultiAssignments();
         final String controllerId = TARGET_PREFIX + "startMultipleRolloutsAndFinishInMultiAssignMode";
@@ -418,7 +426,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
 
         updateActionViaDmfClient(controllerId, installActions.get(1), DmfActionStatus.FINISHED);
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.REQUEST_ATTRIBUTES_UPDATE, EventTopic.MULTI_ACTION);
-        assertLatestMultiActionMessageContainsInstallMessages(controllerId, Arrays.asList(smIds1));
+        assertLatestMultiActionMessageContainsInstallMessages(controllerId, Collections.singletonList(smIds1));
     }
 
     private Set<Long> getSoftwareModuleIds(final DistributionSet ds) {
@@ -533,7 +541,7 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
     }
 
     private void waitUntil(final Callable<Boolean> callable) {
-        createConditionFactory().until(() -> securityRule.runAsPrivileged(callable));
+        createConditionFactory().until(() -> WithSpringAuthorityRule.runAsPrivileged(callable));
     }
 
     private void assertLatestMultiActionMessageContainsInstallMessages(final String controllerId,

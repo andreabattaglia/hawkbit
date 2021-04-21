@@ -15,13 +15,13 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import org.eclipse.hawkbit.repository.exception.InvalidMaintenanceScheduleException;
-import org.junit.Test;
 
 import com.cronutils.model.Cron;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
+import org.junit.jupiter.api.Test;
 
 @Feature("Unit Tests - Repository")
 @Story("Maintenance Schedule Utility")
@@ -47,7 +47,7 @@ public class MaintenanceScheduleHelperTest {
         final String duration = "10";
         assertThatThrownBy(() -> MaintenanceScheduleHelper.validateDuration(duration))
                 .isInstanceOf(InvalidMaintenanceScheduleException.class).hasMessage("Provided duration is not valid")
-                .extracting("durationErrorIndex").containsExactly(2);
+            .extracting("durationErrorIndex").isEqualTo(2);
     }
 
     @Test

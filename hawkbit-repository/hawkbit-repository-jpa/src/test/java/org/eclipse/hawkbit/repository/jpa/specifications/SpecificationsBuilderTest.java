@@ -26,7 +26,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.domain.Specification;
 
 import io.qameta.allure.Description;
@@ -93,7 +93,7 @@ public class SpecificationsBuilderTest {
 
         when(criteriaBuilder.equal(any(Path.class), eq("testValue1"))).thenReturn(equalPredicate1);
         when(criteriaBuilder.equal(any(Path.class), eq("testValue2"))).thenReturn(equalPredicate2);
-        when(criteriaBuilder.and(eq(equalPredicate1), eq(equalPredicate2))).thenReturn(combinedPredicate);
+        when(criteriaBuilder.and(eq(equalPredicate2), eq(equalPredicate1))).thenReturn(combinedPredicate);
         when(root.get("field1")).thenReturn(field1);
         when(root.get("field2")).thenReturn(field2);
 
